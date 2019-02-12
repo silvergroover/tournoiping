@@ -1,21 +1,37 @@
 <head>
-<script	src="include/jquery.min.js"></script>
-<script src="include/highcharts.js"></script>
-<script src="include/exporting.js"></script>
 <link href="include/bootstrap.min.css" rel="stylesheet">
 <link rel="stylesheet" href="include/style.css" type="text/css" />
 <meta charset="UTF-8">
+<!--
+-->
+<script src="sorttable.js"></script>
+<script src="include/exporting.js"></script>
+<script	src="include/jquery.min.js"></script>
+<script src="include/highcharts.js"></script>
 </head>
 
 <?php
-include_once ('include/SmartpingDAO.inc');
-include_once ('include/Smartping.inc');
+
+include_once ('include/SmartpingDAO.php');
 
 $dao = new SmartpingDAO ();
 
+/* echo "<pre>";
+  print_r($_POST);
+  echo "</pre>";
+*/
+if(!empty($_POST)) {
+	$saison = $_POST['saison'];
+	$id = $_POST['id'];
+} else {
+	$saison = $dao->getSaison();
+	$id = $_GET ['id'];
+}
+
+
 // Get Historique des saisons en base
 
-$histo = $dao->getHistorique ( $_GET ['id'] );
+$histo = $dao->getHistorique ( $id );
 $label = "''";
 $data = "null";
 foreach ( $histo as $value ) {
@@ -23,9 +39,11 @@ foreach ( $histo as $value ) {
 	$data = $data . "," . $value ['points'];
 }
 
+$listesaison = $dao->getListeSaison();
+
 // Get Historique des points mensuels en base
 
-$histoMens = $dao->getProgMens( $_GET ['id'] );
+$histoMens = $dao->getProgMens ( $id, $saison );
 $labelMens = "''";
 $dataMens = "null";
 foreach ( $histoMens as $value ) {
@@ -34,34 +52,29 @@ foreach ( $histoMens as $value ) {
 }
 
 // Get infos joueur en base
-
-$joueur = $dao->getJoueurDetails ( $_GET ['id'] );
+$joueur = $dao->getJoueurDetails ( $id );
 foreach ( $joueur as $joueurdetail ) {
-	$clt = variant_int ( $joueurdetail ['point'] / 100 );
+	$clt = floor ( $joueurdetail ['point'] / 100 );
 	$prenom = $joueurdetail ['prenom'];
 	$nom = $joueurdetail ['nom'];
 }
 
-$avgClt = $dao->getAvgClassement( $_GET ['id'] );
+$avgClt = $dao->getAvgClassement( $id , $saison );
  
 // Get historique des parties Spid en base
 
 $nbv = 0;
 $nbd = 0;
 
-$partieSpid = $dao->getPartieParJoueurSpid ( $_GET ['id'] );
+$partieSpid = $dao->getPartieParJoueurSpid ( $id, $saison );
 
-/*echo "<pre>";
-print_r($partieSpid);
-echo "</pre>";
-*/
-$sortPartieSpid = $dao->getTopVictoiresSpid( $_GET ['id'] );
+$sortPartieSpid = $dao->getTopVictoiresSpid( $id, $saison );
 
 $classement = array ();
 $id_class = 5;
 // echo "type : ".gettype($id_class)."<br>";
 foreach ( $partieSpid as $partiedetail ) {
-	$id_class = ( int ) variant_int ( $partiedetail ['classement'] / 100 );
+	$id_class = ( int ) floor ( $partiedetail ['classement'] / 100 );
 	// echo "type : ".gettype($id_class)."<br>";
 	if (array_key_exists ( $id_class, $classement )) {
 		$classement[$id_class]['clt'] = $classement[$id_class]['clt'] + 1;
@@ -82,11 +95,12 @@ $nbt = $nbv + $nbd;
 if ($nbt == 0) {
 	$nbt = 1;
 }
-$nbpv = variant_int ( $nbv * 100 / $nbt );
+$nbpv = floor ( $nbv * 100 / $nbt );
 $nbpd = 100 - $nbpv;
 ksort ( $classement, SORT_NUMERIC );
 
 // $classement = $dao->getClassementAdversaires($_GET['id']);
+
 
  
 ?>
@@ -369,21 +383,53 @@ $(function () {
 	});
 </script>
 
+		<form method="post" action="joueurSpid.php">
+		<p><center>
+		<fieldset>
+		<legend>Saison : <?php echo $saison ?></legend> <!-- Titre du fieldset --> 
+
+		<select name="saison">
+			<option value=""> ----- Saison ----- </option>
+			<?php  
+			$i=0;
+			foreach ( $listesaison as $value ) {
+			$i++;	
+			echo "<pre>";
+			print_r($value);
+			echo "</pre>";
+			?>
+			<?php echo $value[saison] ?>
+			<option value="<?php echo $value['saison'] ?>"> <?php echo $value['saison'] ?> </option>
+			<?php  
+			}
+			?>
+		</select>
+
+		<!-- un bouton pour valider -->
+		<input type="hidden" name="id" value="<?php echo $id?>" />
+		<input type="submit" value="valider" name="bouton">
+		</form>
+		</center>
+		</p>
+		</form>
+
+
 <?php
 foreach ( $joueur as $joueurdetail ) {
-	$classement = variant_int ( $joueurdetail ['point'] / 100 );
+	$classement = floor ( $joueurdetail ['point'] / 100 );
 }
 ?>
 
-<div class="container">
+<div class="container" id="haut">
 
 	<!-- AFFICHE DU JOUEUR -->
 	<div class="col-md-6">
 	<center>
 			<div class="thumbnail" style="background-color: #FAFAFA">
-				<img class="img-circle img-responsive img-center"
-					src="./joueur/homme.jpg" alt="" width="50%">
 				<div class="caption">
+				<table>
+				<tr><td><img src="include/photos/<?php echo $joueurdetail['licence']?>.jpg" style="float:right;height:100px;"</td>
+				<td>
 					<h3><?php echo $joueurdetail['prenom']. " ". $joueurdetail['nom']?></br>
 					</h3>
 					<ul class="list-unstyled">
@@ -391,6 +437,7 @@ foreach ( $joueur as $joueurdetail ) {
 						<li><strong>Catégorie:</strong> <?php echo $joueurdetail['categ']?>  </li>
 						<li><strong>Points licence:</strong> <?php echo $joueurdetail['valinit']?>  </li>
 					</ul>
+				</td></tr></table>
 				</div>
 			</div>
 			<div class="thumbnail" style="background-color: #FAFAFA">
@@ -405,7 +452,7 @@ foreach ( $joueur as $joueurdetail ) {
 					<p>
 						<strong>Progression annuelle</strong> <?php echo $joueurdetail['progann']?> points</p>
 					<p>
-						<strong>Classement moyen des adversaires</strong> <?php echo variant_int($avgClt[0][0])?> points</p>
+						<strong>Classement moyen des adversaires</strong> <?php echo floor($avgClt[0][0])?> points</p>
 				</div>
 			</div>
 
@@ -420,12 +467,14 @@ foreach ( $joueur as $joueurdetail ) {
 					<th data-type="numeric" class="text-center">points adv</th>
 					<th data-type="numeric" class="text-center">écart</th>
 				</tr>
-				<?php for($i = 0; $i < 5; ++$i) {?>
+				<?php for($i = 0; $i < 5; ++$i) {
+					if(isset($sortPartieSpid[$i])) {?>
+				<tr>
 					<td><?php echo $sortPartieSpid[$i]['adversaire']?></td>
 					<td data-type="numeric" class="text-center"><?php echo $sortPartieSpid[$i]['classement']?></td>
 					<td data-type="numeric" class="text-center"><?php echo $sortPartieSpid[$i]['classement'] - $joueurdetail['valinit']?></td>
 				</tr>
-				<?php } ?>
+				<?php }} ?>
 				</table>
 				</p>
 			</div>
@@ -513,6 +562,7 @@ foreach ( $partieSpid as $partiedetail ) {
 }
 ?>
 </table>
+<br/><a href="#haut">haut de page</a>
 </p>
 
-<script src="sorttable.js"></script>
+
