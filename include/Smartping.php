@@ -203,7 +203,7 @@ class Service
 
     public function getEquipesByClub($club, $type = null)
     {
-        if ($type && !in_array($type, array('M', 'F'))) {
+        if ($type && !in_array($type, array('M', 'F', 'J'))) {
             $type = 'M';
         }
 
@@ -217,6 +217,7 @@ class Service
 
             $team['idpoule'] = $params['cx_poule'];
             $team['iddiv'] = $params['D1'];
+			$team['type'] = $type;
         }
 
         return $teams;
@@ -452,5 +453,6 @@ class Service
     public static function fonctionComparaison($a, $b){
     	return $a['val'] < $b['val'];
     }
+//echo "Smartping.php included";
 
 }
