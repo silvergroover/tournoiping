@@ -77,9 +77,9 @@ foreach ($joueur as $val) {
 	// on récupere la date de la derniere partie insérée dans la table fftt_parties_spid
 	$DateDernierePartie = $dao->getDateDernierePartie('fftt_parties_spid',$val['licence']);
 			echo "date db : ".$DateDernierePartie."<br>";
-//	$DateDernierePartie = strtotime( $DateDernierePartie );
-	
-	$DateDernierePartie = 0;
+
+	$DateDernierePartie = strtotime( $DateDernierePartie );
+	//$DateDernierePartie = 0;
 	
 		// on récupère les parties sur l'api fftt Spid
 	$JoueurParties = $api->getJoueurPartiesSpid($val['licence']);
