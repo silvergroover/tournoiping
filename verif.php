@@ -8,8 +8,7 @@
 <body>
 
 <?php
-//include_once ('include/tournoiDAO.php');
-include_once ('include/SmartpingDAO.php');
+include_once ('include/tournoiDAO.php');
 $dao = new SmartpingDAO ();
 // create object session
 //echo "connect to smartping";

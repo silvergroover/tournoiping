@@ -1,17 +1,17 @@
 <HEAD>
 <meta charset="UTF-8">
+
 <link rel="stylesheet" href="include/style.css" type="text/css" />
-<script	src="include/jquery.min.js"></script>
 
 </HEAD>
 
 <html><body>
-
 <?php
-include_once ('include/SmartpingDAO.php');
+include_once ('include/tournoiDAO.php');
 $dao = new SmartpingDAO ();
   
 $annee = date("Y");
+
 $tableaux = $dao->getTableauxTournoi($annee);
 
   /*****************************************
@@ -134,38 +134,47 @@ $tableaux = $dao->getTableauxTournoi($annee);
 
 			<div class="thumbnail" style="background-color: #FAFAFA">
 			<form method="post" action="verif.php">
+
 				<fieldset><p><br />
+
 				Choisissez les tableaux de la première journée auxquels vous souhaitez paticiper (2 maximum) :<br /><br />
+
+                <table>
 				<?php  
 				$i=0;
 				foreach ( $tableaux as $key => $tab ) {
 				$i++;	
-					if($tab['jour'] == 1) {
-						?>
-						<input type="checkbox" name="<?php echo $key ?>" id="<?php echo $key ?>" /> <label for="<?php echo $key ?>"><?php echo $key." (".$tab['clamin']." à ".$tab['clamax'].") " ?> </label>
-						<?php  
+					if($tab['jour'] == 1 ) {
+//					if($tab['jour'] == 1 && $tab['type'] == "simple") {
+                ?>
+						<tr><td><input type="checkbox" name="<?php echo $key ?>" id="<?php echo $key ?>" /> <label for="<?php echo $key ?>"><?php echo $key." (".$tab['clamin']." à ".$tab['clamax'].")  " ?></td><td> <?php echo $tab['description'] ?></label></td></tr>
+				<?php  
 					}
 				}
 				?>
-				<br />
+				</table><br />
 				</p></fieldset>
 			</div>
 
 			<div class="thumbnail" style="background-color: #FAFAFA">
 				<fieldset><p><br />
 				Choisissez les tableaux de la deuxième journée auxquels vous souhaitez paticiper (2 maximum) :<br /><br />
+                <table>
 				<?php  
+
 				$i=0;
 				foreach ( $tableaux as $key => $tab ) {
 				$i++;	
 					if($tab['jour'] == 2) {
 						?>
-						<input type="checkbox" name="<?php echo $key ?>" id="<?php echo $key ?>" /> <label for="<?php echo $key ?>"><?php echo $key." (".$tab['clamin']." à ".$tab['clamax'].") " ?> </label>
-						<?php  
+						<tr><td><input type="checkbox" name="<?php echo $key ?>" id="<?php echo $key ?>" /> <label for="<?php echo $key ?>"><?php echo $key." (".$tab['clamin']." à ".$tab['clamax'].")  " ?></td><td> <?php echo $tab['description'] ?></label></td>
+
+                </td></tr>
+				<?php  
 					}
 				}
 				?>
-				<br />
+				</table><br />
 				</p></fieldset>
 			</div><br />
 				<input type="hidden" name="licence" value="<?php echo $licence?>" />

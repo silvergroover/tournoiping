@@ -8,7 +8,7 @@
 <body>
 <?php
 
-include_once ('include/SmartpingDAO.php');
+include_once ('include/tournoiDAO.php');
 $dao = new SmartpingDAO ();
   
 $annee = date("Y");
