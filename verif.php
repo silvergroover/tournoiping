@@ -20,6 +20,10 @@ $dao = new SmartpingDAO ();
   if(!empty($_POST))
   {
 
+	echo "<pre>";
+	print_r($_POST);
+	echo "</pre>";
+
 	$api = new Service('SW021', 'Hd125pYK04');
 
 	if (empty($_SESSION['serial'])) {
@@ -38,6 +42,9 @@ $dao = new SmartpingDAO ();
 	$date = date("Y-m-d");
 	
 	$joueurdetail = $api->getJoueur($licence);
+        echo "<pre>";
+        print_r($joueurdetail);
+        echo "</pre>";
 	$tableaux = $dao->getTableauxTournoi($annee);
 
 	$dao->insererJoueurTournoi($joueurdetail['prenom'],$joueurdetail['nom'],$joueurdetail['point'],$joueurdetail['categ'],$joueurdetail['valcla'],$joueurdetail['progmois'],$joueurdetail['progann'],$joueurdetail['licence'],$email,$tel,$joueurdetail['club'],$joueurdetail['clnat'],$annee,$date);
@@ -50,28 +57,60 @@ $dao = new SmartpingDAO ();
 		// si c'est une case cochée alors c'est un tableau
 		if($post == 'on') {
 
-		// requete nb joueurs inscrits dans ce tableau
-			$nb_joueurs = $dao->getNbJoueursTableau($key,$annee);
-			if( $nb_joueurs[0]['nb'] >= $tableaux[$key]['joueurs_max'] ) {
-					$message = $message."Le tableau ".$key." est complet, merci de modifier vos choix<br>";
+            // ce tableau est un double
+            if(isset($_POST[$key."j2"])) {
+                echo $key ." est un double : ".$_POST[$key."j2"] ;
+                    $licence2 = trim($_POST[$key."j2"]);
+                echo "<br>licence: ".$licence."-".$licence2;
+                	$joueurdetail2 = $api->getJoueur($licence2);
+                    $points_equipe = $joueurdetail['valcla'] + $joueurdetail2['valcla'];
+                    echo "<br> points equipes : ".$points_equipe;
+	                echo "<pre>";
+	                print_r($joueurdetail2);
+	                echo "</pre>";
+
+    		    // requete nb d'équipes inscrites dans ce tableau
+
+			    $nb_joueurs = $dao->getNbEquipesTableauDouble($key,$annee);
+			    if( $nb_joueurs[0]['nb'] >= $tableaux[$key]['joueurs_max'] ) {
+					    $message = $message."Le tableau ".$key." est complet, merci de modifier vos choix<br>";
+			    }
+
+			    // vérifie les points du équipe vs le tableau
+			    else {
+				    if ($points_equipe < $tableaux[$key]['clamin'] ) {
+					    $message = $message."Le tableau ".$key." est réservé aux équipes ayant plus de ".$tableaux[$key]['clamin'] ." points<br>";
+				    }
+				    elseif ( $points_equipe > $tableaux[$key]['clamax'] ) {
+					    $message = $message."Ce tableau ".$key." est réservé aux équipes ayant maximum ".$tableaux[$key]['clamax'] ." points<br>";
+				    } 
+			    }
+
+            }
+            else {
+
+		    // requete nb joueurs inscrits dans ce tableau
+			    $nb_joueurs = $dao->getNbJoueursTableau($key,$annee);
+			    if( $nb_joueurs[0]['nb'] >= $tableaux[$key]['joueurs_max'] ) {
+					    $message = $message."Le tableau ".$key." est complet, merci de modifier vos choix<br>";
+			    }
+			    // vérifie les points du joueur vs le tableau
+			    else {
+				    if ($joueurdetail['valcla'] < $tableaux[$key]['clamin'] ) {
+					    $message = $message."Le tableau ".$key." est réservé au joueurs ayant plus de ".$tableaux[$key]['clamin'] ." points<br>";
+				    }
+				    elseif ( $joueurdetail['valcla'] > $tableaux[$key]['clamax'] ) {
+					    $message = $message."Ce tableau ".$key." est réservé au joueurs ayant maximum ".$tableaux[$key]['clamax'] ." points<br>";
+				    } 
+				    else {
+					    // vérifie qu'il ne s'inscrit pas dans plus de 2 tableaux
+					    $jour[$tableaux[$key]['jour']] = $jour[$tableaux[$key]['jour']] +1;
+					    if ($jour[$tableaux[$key]['jour']] > 2) {
+						    $message = $message."Vous ne pouvez choisir que 2 tableaux pour le jour ".$tableaux[$key]['jour']."</br>";
+					    }
+				    }
+			    }
 			}
-			// vérifie les points du joueur vs le tableau
-			else {
-				if ($joueurdetail['valcla'] < $tableaux[$key]['clamin'] ) {
-					$message = $message."Le tableau ".$key." est réservé au joueurs ayant plus de ".$tableaux[$key]['clamin'] ." points<br>";
-				}
-				elseif ( $joueurdetail['valcla'] > $tableaux[$key]['clamax'] ) {
-					$message = $message."Ce tableau ".$key." est réservé au joueurs ayant maximum ".$tableaux[$key]['clamax'] ." points<br>";
-				} 
-				else {
-					// vérifie qu'il ne s'inscrit pas dans plus de 2 tableaux
-					$jour[$tableaux[$key]['jour']] = $jour[$tableaux[$key]['jour']] +1;
-					if ($jour[$tableaux[$key]['jour']] > 2) {
-						$message = $message."Vous ne pouvez choisir que 2 tableaux pour le jour ".$tableaux[$key]['jour']."</br>";
-					}
-				}
-			}
-				;
 		}
 	}
 	// si pas de message, on peut valider l'inscription

@@ -71,6 +71,33 @@ include_once ('local.php');
 		}
 	}
 
+	public function getJoueursTableauDouble($tab,$annee) {
+		$db = null;
+		$st = null;
+		try {
+			$db=$this->connexion();
+			$sql = "SELECT * FROM `fftt_tournoi_joueurs` inner join `fftt_tournoi_joueurs_tab_double` 
+			on `fftt_tournoi_joueurs`.licence = `fftt_tournoi_joueurs_tab_double`.`licence` 
+			WHERE `fftt_tournoi_joueurs_tab_double`.tableau = '$tab' AND `fftt_tournoi_joueurs_tab_double`.annee = '$annee' ";
+			$st = $db->prepare($sql);
+			//echo $sql;
+			$st->execute();
+			$result = $st->fetchAll(\PDO::FETCH_GROUP|\PDO::FETCH_UNIQUE);
+			return $result;
+		}
+		catch (PDOException $e) {
+			//		throw new JournalException("erreur de l'enregistrement du joueur");
+			throw new JournalException(print_r($db->errorInfo()));
+			print_r($dbh->errorInfo());
+		}
+		finally {
+			//fermeture de la connexion
+			if(!is_null($st))
+				$st->closeCursor();
+				$db=null;
+		}
+	}
+
 	public function insererJoueurTournoi ($prenom,$nom,$point,$categ,$valinit,$progmois,$progann,$licence,$email,$tel,$club,$clnat,$annee,$date) {
 		$db = null;
 		$st = null;
@@ -104,6 +131,30 @@ include_once ('local.php');
 		try {
 			$db=$this->connexion();
 			$sql = "SELECT count(*) as nb FROM fftt_tournoi_joueurs_tab WHERE tableau = '$tab' AND annee = $annee";
+			$st = $db->prepare($sql);
+			$st->execute();
+			$result = $st->fetchAll();
+			return $result;
+		}
+		catch (PDOException $e) {
+			//		throw new JournalException("erreur de l'enregistrement du joueur");
+			throw new JournalException(print_r($db->errorInfo()));
+			print_r($dbh->errorInfo());
+		}
+		finally {
+			//fermeture de la connexion
+			if(!is_null($st))
+				$st->closeCursor();
+				$db=null;
+		}
+	}
+
+	public function getNbEquipesTableauDouble($tab,$annee) {
+		$db = null;
+		$st = null;
+		try {
+			$db=$this->connexion();
+			$sql = "SELECT count(*) as nb FROM fftt_tournoi_joueurs_tab_double WHERE tableau = '$tab' AND annee = $annee";
 			$st = $db->prepare($sql);
 			$st->execute();
 			$result = $st->fetchAll();
