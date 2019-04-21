@@ -14,6 +14,11 @@ $dao = new SmartpingDAO ();
 $annee = date("Y");
 $tableaux = $dao->getTableauxTournoi($annee);
 $places = $dao->getNbPlaces($annee);
+
+	/*	echo "<pre>";
+			print_r($places);
+		echo "</pre>";
+    */
 ?>
 <div class="container">
 
@@ -73,56 +78,87 @@ $places = $dao->getNbPlaces($annee);
 	</center></p>
 </form>
 <?php  
-	if(!empty($_POST))
-	{
-		$joueur = $dao->getJoueursTableau($_POST['tableau'],date("Y"));
-/*		echo "<pre>";
-			print_r($joueur);
-		echo "</pre>";
-*/	?>
-	<h3> Tableau <?php echo $_POST['tableau']?></h3>
-	<p align="center">
-	<table class="sortable oddeven">
-		<tr>
-			<th> Nom / prenom</th>
-			<th>Club</th>
-			<th>Categorie</th>
-			<th>Classement Nat</th>
-			<th>Pts Licence</th>
-			<th>pts mensuels</th>
-			<th>Prog mensuelle</th>
-			<th>Prog annuelle</th>
-			<th></th>
-		</tr>
+if(!empty($_POST))
+{
+    $type = $tableaux[$_POST['tableau']]['type'];
 
-<?php
-foreach ( $joueur as $joueurdetail ) {
-	?>
-			<td><?php echo $joueurdetail['nom']. " ".$joueurdetail['prenom'] ?></td>
-			<td><?php echo $joueurdetail['club']?></td>
-			<td><?php echo $joueurdetail['categ']?></td>
-			<td><?php echo $joueurdetail['clnat']?></td>
-			<td><?php echo $joueurdetail['valinit']?></td>
-			<td><?php echo $joueurdetail['point']?></td>
-			<td><?php 
-				if ($joueurdetail['progmois']>0) {
-					echo $joueurdetail['progmois']."  " ?><img alt="" src="include/arrow_up2.png" style="float:right;width:24px;height:24px;">
-				<?php }
-				elseif ($joueurdetail['progmois']<0) {
-					echo $joueurdetail['progmois']."  "?><img alt="" src="include/arrow_down2.png" style="float:right;width:24px;height:24px;"> 
-				<?php }?> 
-			</td>
-			<td><?php 
-				if ($joueurdetail['progann']>0) {
-					echo $joueurdetail['progann']."  " ?><img alt="" src="include/arrow_up2.png" style="float:right;width:24px;height:24px;">
-				<?php }
-				elseif ($joueurdetail['progann']<0) {
-					echo $joueurdetail['progann']."  "?><img alt="" src="include/arrow_down2.png" style="float:right;width:24px;height:24px;"> 
-				<?php }?> 
-			</td>
-		</tr>
-<?php
-	}
+    if( $type === "simple" )
+    {
+		$joueur = $dao->getJoueursTableau($_POST['tableau'],date("Y"));
+        /*		echo "<pre>";
+			print_r($joueur);
+    	echo "</pre>";
+        */
+	    ?>
+	    <h3> Tableau <?php echo $_POST['tableau']?></h3>
+	    <p align="center">
+	    <table class="sortable oddeven">
+		    <tr>
+			    <th> Nom / prenom</th>
+			    <th>Club</th>
+			    <th>Categorie</th>
+			    <th>Classement Nat</th>
+			    <th>Pts Licence</th>
+			    <th>pts mensuels</th>
+			    <th>Prog mensuelle</th>
+			    <th>Prog annuelle</th>
+			    <th></th>
+		    </tr>
+
+        <?php
+        foreach ( $joueur as $joueurdetail ) {
+	    ?>
+			    <td><?php echo $joueurdetail['nom']. " ".$joueurdetail['prenom'] ?></td>
+			    <td><?php echo $joueurdetail['club']?></td>
+			    <td><?php echo $joueurdetail['categ']?></td>
+			    <td><?php echo $joueurdetail['clnat']?></td>
+			    <td><?php echo $joueurdetail['valinit']?></td>
+			    <td><?php echo $joueurdetail['point']?></td>
+			    <td><?php 
+				    if ($joueurdetail['progmois']>0) {
+					    echo $joueurdetail['progmois']."  " ?><img alt="" src="include/arrow_up2.png" style="float:right;width:24px;height:24px;">
+				    <?php }
+				    elseif ($joueurdetail['progmois']<0) {
+					    echo $joueurdetail['progmois']."  "?><img alt="" src="include/arrow_down2.png" style="float:right;width:24px;height:24px;"> 
+				    <?php }?> 
+			    </td>
+			    <td><?php 
+				    if ($joueurdetail['progann']>0) {
+					    echo $joueurdetail['progann']."  " ?><img alt="" src="include/arrow_up2.png" style="float:right;width:24px;height:24px;">
+				    <?php }
+				    elseif ($joueurdetail['progann']<0) {
+					    echo $joueurdetail['progann']."  "?><img alt="" src="include/arrow_down2.png" style="float:right;width:24px;height:24px;"> 
+				    <?php }?> 
+			    </td>
+		    </tr>
+        <?php
+	    }
+    }
+    elseif( $type === "double" )
+    {
+		$joueurs = $dao->getJoueursTableauDouble($_POST['tableau'],date("Y"));
+        echo "<pre>";
+			print_r($joueur);
+    	echo "</pre>";
+        
+	    ?>
+	    <h3> Tableau <?php echo $_POST['tableau']?></h3>
+	    <p align="center">
+	    <table class="sortable oddeven">
+		    <tr>
+			    <th> Equipe</th>
+			    <th>Points</th>
+		    </tr>
+
+        <?php
+        foreach ( $joueurs as $equipe => $detail ) {
+	    ?>
+			    <td><?php echo $equipe ?></td>
+			    <td><?php echo $detail['points']?></td>
+		    </tr>
+        <?php
+	    }
+    }
 }
 ?>
 </table>
