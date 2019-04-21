@@ -131,7 +131,7 @@ if(!empty($_POST)) {
 					</ul>
 				</fieldset></div>
 			</div><br />
-(
+
 
 			<div class="thumbnail" style="background-color: #FAFAFA">
 			<form method="post" action="verif.php">
@@ -228,7 +228,7 @@ if(!empty($_POST)) {
 				<input type="hidden" name="tel" value="<?php echo $tel?>" />
 				<input type="submit" value="Envoyer">
 			</form>
-		</center>
+		</center>   
 	</div>
 </center>
 </div>

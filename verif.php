@@ -42,9 +42,6 @@ $dao = new SmartpingDAO ();
 	$date = date("Y-m-d");
 	
 	$joueurdetail = $api->getJoueur($licence);
-        echo "<pre>";
-        print_r($joueurdetail);
-        echo "</pre>";
 	$tableaux = $dao->getTableauxTournoi($annee);
 
 	$dao->insererJoueurTournoi($joueurdetail['prenom'],$joueurdetail['nom'],$joueurdetail['point'],$joueurdetail['categ'],$joueurdetail['valcla'],$joueurdetail['progmois'],$joueurdetail['progann'],$joueurdetail['licence'],$email,$tel,$joueurdetail['club'],$joueurdetail['clnat'],$annee,$date);
@@ -63,11 +60,12 @@ $dao = new SmartpingDAO ();
                     $licence2 = trim($_POST[$key."j2"]);
                 echo "<br>licence: ".$licence."-".$licence2;
                 	$joueurdetail2 = $api->getJoueur($licence2);
+                    
+                    if(empty($joueurdetail2)) {
+                        $message = $message."La licence '$licence2' de votre partenaire de double est inconnue de la fftt<br>";
+                    }
                     $points_equipe = $joueurdetail['valcla'] + $joueurdetail2['valcla'];
                     echo "<br> points equipes : ".$points_equipe;
-	                echo "<pre>";
-	                print_r($joueurdetail2);
-	                echo "</pre>";
 
     		    // requete nb d'équipes inscrites dans ce tableau
 
@@ -80,9 +78,11 @@ $dao = new SmartpingDAO ();
 			    else {
 				    if ($points_equipe < $tableaux[$key]['clamin'] ) {
 					    $message = $message."Le tableau ".$key." est réservé aux équipes ayant plus de ".$tableaux[$key]['clamin'] ." points<br>";
+                        $message = $message."Points équipe : ".$points_equipe."<br>";
 				    }
 				    elseif ( $points_equipe > $tableaux[$key]['clamax'] ) {
 					    $message = $message."Ce tableau ".$key." est réservé aux équipes ayant maximum ".$tableaux[$key]['clamax'] ." points<br>";
+                        $message = $message."Points équipe : ".$points_equipe."<br>";
 				    } 
 			    }
 
@@ -117,34 +117,43 @@ $dao = new SmartpingDAO ();
 	if (empty ($message)) { 
 		// on réinitialise les tableaux pour ce joueur et cette année
 		$dao->supprimerJoueurTableau ($licence,$annee);
+		$dao->supprimerJoueurTableauDouble ($licence,$annee);
+
 		
 	// ON insère les nouveaux choix de tableaux
 		foreach ( $_POST as $key => $post ) {
-			if($post == 'on') {
-				$dao->insererJoueurTableau ($licence,$key,$annee);
-			}
-		}
-		$joueurdao = $dao->getJoueurTournoi($joueurdetail['licence'],$annee);
+            if($post == 'on') {
+                if(isset($_POST[$key."j2"])) {
+                    $licence2 = trim($_POST[$key."j2"]);
+ 				    $dao->insererJoueurTableauDouble ($licence,$licence2,$key,$annee);
+                	$dao->insererJoueurTournoi($joueurdetail2['prenom'],$joueurdetail2['nom'],$joueurdetail2['point'],$joueurdetail2['categ'],$joueurdetail2['valcla'],$joueurdetail2['progmois'],$joueurdetail2['progann'],$joueurdetail2['licence'],$email,$tel,$joueurdetail2['club'],$joueurdetail2['clnat'],$annee,$date);
+                }
+                else {
+ 			    	$dao->insererJoueurTableau ($licence,$key,$annee);
+			    }
+		    }
+        }
+		    $joueurdao = $dao->getJoueurTournoi($joueurdetail['licence'],$annee);
 
-		// on vérifie que le joueur entré en base est bon, sinon on affiche une erreur
-		if ( $joueurdao[$licence]['nom'] != $joueurdetail['nom'] ) {
+	    	// on vérifie que le joueur entré en base est bon, sinon on affiche une erreur
+		    if ( $joueurdao[$licence]['nom'] != $joueurdetail['nom'] ) {
 ?> 
-			<div class="container" id="haut">
-			<div class="col-md-6">
-			<center>
-				<div class="thumbnail" style="background-color: #FE2E2E">
-					<div class="caption">
-						<fieldset>
-							<h3><?php echo "Une erreur s'est produite </br>"?></br></h3>
-						</fieldset>
-					</div>
-				</div><br />
-			</center>
-			</div>
-			</div>
+			    <div class="container" id="haut">
+			    <div class="col-md-6">
+			    <center>
+				    <div class="thumbnail" style="background-color: #FE2E2E">
+					    <div class="caption">
+						    <fieldset>
+							    <h3><?php echo "Une erreur s'est produite </br>"?></br></h3>
+						    </fieldset>
+					    </div>
+				    </div><br />
+			    </center>
+			    </div>
+			    </div>
 <?php
-		}
-		else {
+		    }
+		    else {
 	
 ?> 
 			<div class="container" id="haut">
@@ -169,12 +178,12 @@ $dao = new SmartpingDAO ();
 			</center>
 			</div>
 			</div>
-    <center><input type=button onClick="location.href='http://aurorevitrett.fr/'" value="retour à l'accueil"><center>
-    <center><input type=button onClick="location.href='http://aurorevitrett.fr/fftt/inscription.php'" value='nouvelle inscription'><center>
+        <center><input type=button onClick="location.href='http://aurorevitrett.fr/'" value="retour à l'accueil"><center>
+        <center><input type=button onClick="location.href='http://aurorevitrett.fr/fftt/inscription.php'" value='nouvelle inscription'><center>
 <?php 
-		}
-	}
-	else {
+		    }
+	    }
+    	else {
 ?> 
 
 		<div class="container" id="haut">
@@ -205,37 +214,90 @@ $dao = new SmartpingDAO ();
 
 						<form method="post" action="verif.php">
 				<fieldset><p><br />
+
 				Choisissez les tableaux de la première journée auxquels vous souhaitez paticiper (2 maximum) :<br /><br />
+
+                <table>
+                <tr><th colspan="2">SIMPLES</th></tr>
 				<?php  
 				$i=0;
 				foreach ( $tableaux as $key => $tab ) {
 				$i++;	
-					if($tab['jour'] == 1) {
-						?>
-						<input type="checkbox" name="<?php echo $key ?>" id="<?php echo $key ?>" /> <label for="<?php echo $key ?>"><?php echo $key." (".$tab['clamin']." à ".$tab['clamax'].") " ?> </label>
-						<?php  
+//					if($tab['jour'] == 1 ) {
+					if($tab['jour'] == 1 && $tab['type'] == "simple") {
+                ?>
+						<tr><td><input type="checkbox" name="<?php echo $key ?>" id="<?php echo $key ?>" /> <label for="<?php echo $key ?>"><?php echo $key." (".$tab['clamin']." à ".$tab['clamax'].")  " ?></td><td> <?php echo $tab['description'] ?></label></td></tr>
+				<?php  
 					}
 				}
 				?>
-				<br />
+				</table><br /><br />
+
+
+                <table>
+                <tr><th colspan="3">DOUBLES</th></tr>
+				<?php  
+				$i=0;
+				foreach ( $tableaux as $key => $tab ) {
+                $j2 = $key."j2";
+				$i++;	
+//					if($tab['jour'] == 1 ) {
+					if($tab['jour'] == 1 && $tab['type'] == "double") {
+                ?>
+				    <tr>
+                        <td><input type="checkbox" name="<?php echo $key ?>" id="<?php echo $key ?>" /> <label for="<?php echo $key ?>"><?php echo $key." (".$tab['clamin']." à ".$tab['clamax'].")  " ?></td>
+                        <td><label for="<?php echo "j2" ?>">licence joueur 2 : </label><input type="text" name="<?php echo $j2 ?>" id="<?php echo "j2" ?>" size="25" /></td>
+                        <td> <?php echo $tab['description'] ?></label></td>
+                    </tr>
+				<?php  
+					}
+				}
+				?>
+				</table><br />
+
 				</p></fieldset>
 			</div>
 
 			<div class="thumbnail" style="background-color: #FAFAFA">
 				<fieldset><p><br />
 				Choisissez les tableaux de la deuxième journée auxquels vous souhaitez paticiper (2 maximum) :<br /><br />
+                <table>
+                <tr><th colspan="2">SIMPLES</th></tr>
 				<?php  
 				$i=0;
 				foreach ( $tableaux as $key => $tab ) {
 				$i++;	
-					if($tab['jour'] == 2) {
-						?>
-						<input type="checkbox" name="<?php echo $key ?>" id="<?php echo $key ?>" /> <label for="<?php echo $key ?>"><?php echo $key." (".$tab['clamin']." à ".$tab['clamax'].") " ?> </label>
-						<?php  
+//					if($tab['jour'] == 1 ) {
+					if($tab['jour'] == 2 && $tab['type'] == "simple") {
+                ?>
+						<tr><td><input type="checkbox" name="<?php echo $key ?>" id="<?php echo $key ?>" /> <label for="<?php echo $key ?>"><?php echo $key." (".$tab['clamin']." à ".$tab['clamax'].")  " ?></td><td> <?php echo $tab['description'] ?></label></td></tr>
+				<?php  
 					}
 				}
 				?>
-				<br />
+				</table><br /><br />
+
+
+                <table>
+                <tr><th colspan="3">DOUBLES</th></tr>
+				<?php  
+				$i=0;
+				foreach ( $tableaux as $key => $tab ) {
+                $j2 = $key."j2";
+				$i++;	
+//					if($tab['jour'] == 1 ) {
+					if($tab['jour'] == 2 && $tab['type'] == "double") {
+                ?>
+				    <tr>
+                        <td><input type="checkbox" name="<?php echo $key ?>" id="<?php echo $key ?>" /> <label for="<?php echo $key ?>"><?php echo $key." (".$tab['clamin']." à ".$tab['clamax'].")  " ?></td>
+                        <td><label for="<?php echo "j2" ?>">licence joueur 2 : </label><input type="text" name="<?php echo $j2 ?>" id="<?php echo "j2" ?>" size="25" /></td>
+                        <td> <?php echo $tab['description'] ?></label></td>
+                    </tr>
+				<?php  
+					}
+				}
+				?>
+				</table><br />
 				</p></fieldset>
 			</div><br />
 				<input type="hidden" name="licence" value="<?php echo $licence?>" />
