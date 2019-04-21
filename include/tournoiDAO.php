@@ -79,9 +79,21 @@ include_once ('local.php');
 			$sql = "SELECT * FROM `fftt_tournoi_joueurs` inner join `fftt_tournoi_joueurs_tab_double` 
 			on `fftt_tournoi_joueurs`.licence = `fftt_tournoi_joueurs_tab_double`.`licence` 
 			WHERE `fftt_tournoi_joueurs_tab_double`.tableau = '$tab' AND `fftt_tournoi_joueurs_tab_double`.annee = '$annee' ";
+
+            $sql = "SELECT CONCAT(t.nom_joueur1,' ',t.prenom_joueur1,' / ',t.nom_joueur2,' ',t.prenom_joueur2) as equipe, 
+                t.point_joueur1+t.point_joueur2 as points FROM ( 
+            SELECT 
+            (SELECT nom FROM `fftt_tournoi_joueurs` WHERE licence = licence1 and annee = 2019) as nom_joueur1, 
+            (SELECT prenom FROM `fftt_tournoi_joueurs` WHERE licence = licence1 and annee = 2019) as prenom_joueur1, 
+            (SELECT nom FROM `fftt_tournoi_joueurs` WHERE licence = licence2 and annee = 2019) as nom_joueur2, 
+            (SELECT prenom FROM `fftt_tournoi_joueurs` WHERE licence = licence2 and annee = 2019) as prenom_joueur2, 
+            (SELECT valinit FROM `fftt_tournoi_joueurs` WHERE licence = licence1 and annee = 2019) as point_joueur1, 
+            (SELECT valinit FROM `fftt_tournoi_joueurs` WHERE licence = licence2 and annee = 2019) as point_joueur2 
+            from `fftt_tournoi_joueurs_tab_double` WHERE `fftt_tournoi_joueurs_tab_double`.tableau = :tab AND `fftt_tournoi_joueurs_tab_double`.annee = :annee ) t
+            ";
 			$st = $db->prepare($sql);
 			//echo $sql;
-			$st->execute();
+			$st->execute(array(':tab' => $tab, ':annee' => $annee ));
 			$result = $st->fetchAll(\PDO::FETCH_GROUP|\PDO::FETCH_UNIQUE);
 			return $result;
 		}
@@ -197,18 +209,45 @@ include_once ('local.php');
 		}
 	}
 
+	public function supprimerJoueurTableauDouble ($licence,$annee) {
+		$db = null;
+		$st = null;
+		try {
+			$db=$this->connexion();
+				
+			$sql="DELETE FROM `fftt_tournoi_joueurs_tab_double` WHERE (`licence1` = '$licence' or `licence2` = '$licence') AND `annee` = '$annee' ";
+		//	echo $sql;
+			
+			$st = $db->prepare($sql);
+			$st->execute();
+		}
+		catch (PDOException $e) {
+			throw new JournalException(print_r($db->errorInfo()));
+			print_r($db->errorInfo());
+		}
+		finally {
+			//fermeture de la connexion
+			if(!is_null($st))
+				$st->closeCursor();
+			$db=null;
+		}
+	}
+
 	public function getNbPlaces($annee) {
 		$db = null;
 		$st = null;
 		try {
 			$db=$this->connexion();
-			$sql = "SELECT nom,jour,joueurs_max,joueurs_max-count(*) as nb FROM fftt_tournoi_tableaux 
-			left join (select * from fftt_tournoi_joueurs_tab where annee = $annee) as t on fftt_tournoi_tableaux.nom = t.tableau 
-			group by nom,jour,joueurs_max 
-			order by nom";
-            $sql = "SELECT nom, jour, fftt_tournoi_tableaux.annee,  CASE WHEN nb IS NOT NULL THEN joueurs_max - nb ELSE joueurs_max END as nb FROM `fftt_tournoi_tableaux` LEFT JOIN (SELECT annee, tableau, count(*) as nb FROM `fftt_tournoi_joueurs_tab` group by annee, tableau) as t ON fftt_tournoi_tableaux.nom = t.tableau AND fftt_tournoi_tableaux.annee = t.annee where fftt_tournoi_tableaux.annee = $annee";
+            $sql = "SELECT nom, jour, fftt_tournoi_tableaux.annee, CASE WHEN nb IS NOT NULL THEN joueurs_max - nb ELSE joueurs_max END as nb 
+                FROM `fftt_tournoi_tableaux` LEFT JOIN (
+                  SELECT annee, tableau, count(*) as nb FROM `fftt_tournoi_joueurs_tab_double` group by annee, tableau 
+                  UNION SELECT annee, tableau, count(*) as nb FROM `fftt_tournoi_joueurs_tab` group by annee, tableau
+                  ) as t 
+                ON fftt_tournoi_tableaux.nom = t.tableau AND fftt_tournoi_tableaux.annee = t.annee 
+                WHERE fftt_tournoi_tableaux.annee = :annee ";
+
 			$st = $db->prepare($sql);
-			$st->execute();
+			$st->execute(array( ':annee' => $annee));
 			$result = $st->fetchAll(\PDO::FETCH_GROUP|\PDO::FETCH_UNIQUE);
 			return $result;
 		}
@@ -254,14 +293,14 @@ include_once ('local.php');
 		$st = null;
 		try {
 			$db=$this->connexion();
-			$sql = "SELECT tableau FROM fftt_tournoi_joueurs_tab WHERE licence = '$licence' AND annee = '$annee'";
+			$sql = "SELECT tableau FROM fftt_tournoi_joueurs_tab WHERE licence = :licence AND annee = :annee UNION SELECT tableau FROM fftt_tournoi_joueurs_tab_double WHERE ( licence1 = :licence or licence2 = :licence ) AND annee = :annee";
 			$st = $db->prepare($sql);
-			$st->execute();
+			$st->execute(array(':licence' => $licence, ':annee' => $annee));
 			$result = $st->fetchAll(\PDO::FETCH_GROUP|\PDO::FETCH_UNIQUE);
 			return $result;
 		}
 		catch (PDOException $e) {
-			//		throw new JournalException("erreur de l'enregistrement du joueur");
+			//		throw new JournalException("erreur lors de la récuperation des données");
 			throw new JournalException(print_r($db->errorInfo()));
 			print_r($dbh->errorInfo());
 		}
@@ -285,6 +324,35 @@ include_once ('local.php');
 			
 			$st = $db->prepare($sql);
 			$st->execute();
+		}
+		catch (PDOException $e) {
+			throw new JournalException(print_r($db->errorInfo()));
+			print_r($db->errorInfo());
+		}
+		finally {
+			//fermeture de la connexion
+			if(!is_null($st))
+				$st->closeCursor();
+			$db=null;
+		}
+	}
+
+	public function insererJoueurTableauDouble ($licence1,$licence2,$tab,$annee) {
+		$db = null;
+		$st = null;
+		try {
+			$db=$this->connexion();
+				
+			$sql="INSERT INTO `fftt_tournoi_joueurs_tab_double`(`licence1`,`licence2`, `annee`, `tableau`) VALUES (:licence1, :licence2, :annee, :tab) ON DUPLICATE KEY UPDATE `licence1` = :licence1, `licence2` = :licence2, `annee` = :annee, `tableau` = :tab";
+	//		$sql="INSERT INTO `fftt_tournoi_joueurs_tab_double`(`licence1`,`licence2`, `annee`, `tableau`) VALUES (?, ?, ?, ?) ON DUPLICATE KEY UPDATE `licence1` = ?, `licence2` = ?, `annee` = ?, `tableau` = ? ";
+			echo $sql;
+			
+            $data = array($licence1,$licence2,$annee,$tab,$licence1,$licence2,$annee,$tab);
+			$st = $db->prepare($sql);
+		//	$st->execute($data);
+//			$st->execute($licence1,$licence2,$tab,$annee,$licence1,$licence2,$annee,$tab);
+            $st->execute(array(':licence1' => $licence1, ':licence2' => $licence2, ':tab' => $tab, ':annee' => $annee ));
+//            $st->execute(array(':licence1' => $licence1, ':licence2' => $licence2, ':tab' => $tab, ':annee' => $annee, ':licence1' => $licence1, ':licence2' => $licence2, ':annee' => $annee, ':tab' => $tab ));
 		}
 		catch (PDOException $e) {
 			throw new JournalException(print_r($db->errorInfo()));
