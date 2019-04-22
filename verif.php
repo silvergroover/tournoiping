@@ -20,10 +20,10 @@ $dao = new SmartpingDAO ();
   if(!empty($_POST))
   {
 
-	echo "<pre>";
+/*	echo "<pre>";
 	print_r($_POST);
 	echo "</pre>";
-
+*/
 	$api = new Service('SW021', 'Hd125pYK04');
 
 	if (empty($_SESSION['serial'])) {
