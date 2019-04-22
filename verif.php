@@ -9,6 +9,8 @@
 
 <?php
 include_once ('include/tournoiDAO.php');
+include_once ('local.php');
+
 $dao = new SmartpingDAO ();
 // create object session
 //echo "connect to smartping";
@@ -24,7 +26,7 @@ $dao = new SmartpingDAO ();
 	print_r($_POST);
 	echo "</pre>";
 */
-	$api = new Service('SW021', 'Hd125pYK04');
+	$api = new Service(API_ID, API_KEY);
 
 	if (empty($_SESSION['serial'])) {
 		$_SESSION['serial'] = Service::generateSerial();
@@ -179,7 +181,7 @@ $dao = new SmartpingDAO ();
 			</div>
 			</div>
         <center><input type=button onClick="location.href='http://aurorevitrett.fr/'" value="retour à l'accueil"><center>
-        <center><input type=button onClick="location.href='http://aurorevitrett.fr/fftt/inscription.php'" value='nouvelle inscription'><center>
+        <center><input type=button onClick="location.href='http://aurorevitrett.fr/tournoi/inscription.php'" value='nouvelle inscription'><center>
 <?php 
 		    }
 	    }
