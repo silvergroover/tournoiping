@@ -11,7 +11,6 @@ CREATE TABLE IF NOT EXISTS `fftt_tournoi_tableaux` (
   PRIMARY KEY (`nom`,`annee`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
-
 CREATE TABLE IF NOT EXISTS `fftt_tournoi_joueurs` (
   `licence` int(10) NOT NULL,
   `nom` varchar(32) NOT NULL,
@@ -35,4 +34,12 @@ CREATE TABLE IF NOT EXISTS `fftt_tournoi_joueurs_tab` (
   `annee` int(4) NOT NULL,
   `tableau` varchar(8) NOT NULL,
   PRIMARY KEY (`licence`,`annee`,`tableau`)
-) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+CREATE TABLE IF NOT EXISTS `fftt_tournoi_joueurs_tab_double` (
+  `licence1` int(8) NOT NULL,
+  `licence2` int(8) NOT NULL,
+  `annee` int(4) NOT NULL,
+  `tableau` varchar(8) NOT NULL,
+  PRIMARY KEY (`licence1`,`licence2`,`annee`,`tableau`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
