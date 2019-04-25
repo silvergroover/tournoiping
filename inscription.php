@@ -106,7 +106,6 @@ if(!empty($_POST)) {
 		<input type="tel" name="tel" id="tel" size="50" value="<?php if(!empty($_POST['tel'])) { echo htmlspecialchars($_POST['tel'], ENT_QUOTES); } ?>" /><br><br>
 		</fieldset>
 		</p>
-            toto
 
 		<input type="submit" value="Envoyer">
 		</center></form>

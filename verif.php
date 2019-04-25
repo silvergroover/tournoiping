@@ -9,7 +9,7 @@
 
 <?php
 include_once ('include/tournoiDAO.php');
-include_once ('local.php');
+include_once ('include/local.php');
 
 $dao = new SmartpingDAO ();
 // create object session
@@ -22,10 +22,10 @@ $dao = new SmartpingDAO ();
   if(!empty($_POST))
   {
 
-/*	echo "<pre>";
+	echo "<pre>";
 	print_r($_POST);
 	echo "</pre>";
-*/
+
 	$api = new Service(API_ID, API_KEY);
 
 	if (empty($_SESSION['serial'])) {
@@ -46,7 +46,9 @@ $dao = new SmartpingDAO ();
 	$joueurdetail = $api->getJoueur($licence);
 	$tableaux = $dao->getTableauxTournoi($annee);
 
-	$dao->insererJoueurTournoi($joueurdetail['prenom'],$joueurdetail['nom'],$joueurdetail['point'],$joueurdetail['categ'],$joueurdetail['valcla'],$joueurdetail['progmois'],$joueurdetail['progann'],$joueurdetail['licence'],$email,$tel,$joueurdetail['club'],$joueurdetail['clnat'],$annee,$date);
+echo intval($joueurdetail['point'])." - ".$joueurdetail['point'];
+
+	$dao->insererJoueurTournoi($joueurdetail['prenom'],$joueurdetail['nom'],intval($joueurdetail['point']),$joueurdetail['categ'],$joueurdetail['valcla'],$joueurdetail['progmois'],$joueurdetail['progann'],$joueurdetail['licence'],$email,$tel,$joueurdetail['club'],$joueurdetail['clnat'],$annee,$date);
 	
 	$message = "";
 	$jour = array(1 => 0, 2 => 0);
@@ -135,9 +137,15 @@ $dao = new SmartpingDAO ();
 			    }
 		    }
         }
-		    $joueurdao = $dao->getJoueurTournoi($joueurdetail['licence'],$annee);
+		    $joueurdao = $dao->getJoueurTournoi($licence,$annee);
+	echo "<pre>";
+	print_r($joueurdao);
+	echo "</pre>";
 
 	    	// on vérifie que le joueur entré en base est bon, sinon on affiche une erreur
+	    	echo "licence=".$licence."<br>";
+	    	echo "nom=".$joueurdao[$licence]['nom']."<br>";
+	    	echo "nom=".$joueurdetail['nom']."<br>";
 		    if ( $joueurdao[$licence]['nom'] != $joueurdetail['nom'] ) {
 ?> 
 			    <div class="container" id="haut">

@@ -69,7 +69,7 @@ include_once ('local.php');
 				$st->closeCursor();
 				$db=null;
 		}
-	}
+    }
 
 	public function getJoueursTableauDouble($tab,$annee) {
 		$db = null;
@@ -92,7 +92,6 @@ include_once ('local.php');
             from `fftt_tournoi_joueurs_tab_double` WHERE `fftt_tournoi_joueurs_tab_double`.tableau = :tab AND `fftt_tournoi_joueurs_tab_double`.annee = :annee ) t
             ";
 			$st = $db->prepare($sql);
-			//echo $sql;
 			$st->execute(array(':tab' => $tab, ':annee' => $annee ));
 			$result = $st->fetchAll(\PDO::FETCH_GROUP|\PDO::FETCH_UNIQUE);
 			return $result;
@@ -117,13 +116,13 @@ include_once ('local.php');
 			$db=$this->connexion();
 				
 			$sql="INSERT INTO fftt_tournoi_joueurs(prenom,nom,point,categ,valinit,progmois,progann,licence,email,tel,club,clnat,annee,date_inscription) 
-			VALUES('$prenom','$nom','$point','$categ','$valinit','$progmois','$progann','$licence','$email','$tel','$club','$clnat','$annee','$date')
+			VALUES('$prenom','$nom','$point','$categ','$valinit','$progmois','$progann','$licence','$email','$tel',:club,'$clnat','$annee','$date')
 			ON DUPLICATE KEY UPDATE point = '$point',categ = '$categ',valinit = '$valinit',progmois = '$progmois',
-			progann = '$progann',email = '$email',tel = '$tel',club = '$club',clnat = '$clnat',annee = '$annee',date_inscription = '$date' ";
+			progann = '$progann',email = '$email',tel = '$tel',club = :club, clnat = '$clnat',annee = '$annee',date_inscription = '$date' ";
 
-	//		echo $sql;
+		//	echo $sql;
 			$st = $db->prepare($sql);
-			$st->execute();
+			$st->execute(array(':club' => $club ));
 		}
 		catch (PDOException $e) {
 			throw new JournalException(print_r($db->errorInfo()));
